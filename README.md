@@ -36,7 +36,7 @@ The application supports user authentication and complete CRUD operations for ma
 ## Getting Started
 
 ### Backend (Spring Boot)
-```bash
+``bash
 cd backend
 ./mvnw spring-boot:run
 
@@ -48,19 +48,20 @@ npm install
 npm start
 
 
-Documentation
+## Documentation
+- [Learning Notes](docs/LEARNING.md) – What technologies and concepts are being learned
+- [Planning & Roadmap](docs/PLANNING.md) – Step-by-step approach for implementation
+- [API Documentation](docs/API_DOCS.md) – Request/Response examples for all endpoints
 
-Learning Notes
-
-Planning & Roadmap
-
-API Documentation
+## License
+This project is licensed under the terms of the [LICENSE](LICENSE) file included in this repository.
 
 
 
-License
 
-This project is licensed under the terms of the LICENSE file included in the repo.
+
+
+
 
 
 
