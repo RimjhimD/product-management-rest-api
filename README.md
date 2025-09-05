@@ -24,10 +24,10 @@ The application supports user authentication and complete CRUD operations for ma
 ---
 
 ## Repository Structure
-backend/ → Spring Boot project
-frontend/ → React project
-docs/ → Documentation (learning, planning, API docs)
-problem/ → Assignment / problem statement
+- backend/ → Spring Boot project
+- frontend/ → React project
+- docs/ → Documentation (learning, planning, API docs)
+- problem/ → Assignment / problem statement
 
 
 
