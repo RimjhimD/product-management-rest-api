@@ -47,3 +47,24 @@ cd frontend
 npm install
 npm start
 
+
+Documentation
+
+Learning Notes
+
+Planning & Roadmap
+
+API Documentation
+
+
+
+License
+
+This project is licensed under the terms of the LICENSE file included in the repo.
+
+
+
+
+
+
+
