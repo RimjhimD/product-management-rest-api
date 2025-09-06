@@ -1,8 +1,7 @@
 
 # Product Management System
 
-A full-stack product management system built with **Spring Boot (backend)** and **React (frontend)**.  
-The application supports user authentication and complete CRUD operations for managing products.  
+Product Management System with Spring Boot REST API and React frontend. Supports authentication and CRUD operations.
 
 ---
 
@@ -18,14 +17,14 @@ The application supports user authentication and complete CRUD operations for ma
 ## Tech Stack
 - **Frontend**: React, Axios, React Router
 - **Backend**: Spring Boot, Spring Data JPA
-- **Database**: MySQL (or PostgreSQL)
+- **Database**: MySQL 
 - **Logging**: SLF4J + Logback
 
 ---
 
 ## Repository Structure
 - backend/ → Spring Boot project
-- frontend/ → React project
+- frontend/ → React+ Vite project
 - docs/ → Documentation (learning, planning, API docs)
 - problem/ → Assignment / problem statement
 
