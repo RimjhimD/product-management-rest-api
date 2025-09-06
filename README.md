@@ -9,13 +9,12 @@ Product Management System with Spring Boot REST API and React frontend. Supports
 - Login and registration flow (React frontend)
 - CRUD operations for products (Spring Boot backend)
 - Request validation & exception handling
-- Logging with SLF4J + Logback
-- Database integration (MySQL/PostgreSQL)
+- Database integration (MySQL)
 
 ---
 
 ## Tech Stack
-- **Frontend**: React, Axios, React Router
+- **Frontend**: React,Vite Axios, React Router
 - **Backend**: Spring Boot, Spring Data JPA
 - **Database**: MySQL 
 - **Logging**: SLF4J + Logback
@@ -54,6 +53,7 @@ npm start
 - [Learning Notes](docs/LEARNING.md) – What technologies and concepts are being learned
 - [Planning & Roadmap](docs/PLANNING.md) – Step-by-step approach for implementation
 - [API Documentation](docs/API_DOCS.md) – Request/Response examples for all endpoints
+- [Project Updates](docs/PROJECT-UPDATE.md) – Daily updates on tasks, issues faced, and fixes
   
 
 ## License
