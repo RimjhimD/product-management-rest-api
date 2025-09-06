@@ -52,18 +52,14 @@ Resource video watch-*Spring Boot basics one done
 next-1) implementation(need to watch)
      2) React (need to watch)
 
-Worked on Backend
-      problem faced: intelli j idea ultimate crashed[ using community one],couldnt found Maven issue[not fixed]
-                      faced dependency error [fixed]
+
                        
 
  5 Sep----> 1) Video watching done 
             2) Basics abt react learning done 
-            3) Worked on frontend ,
-                 problem faced: cant add product
-                                login,register page didnt load[ fixed it]
+            
 
-6 Sep---->
+6 Sep----> worked on implementation
 
 
 ## Notes
