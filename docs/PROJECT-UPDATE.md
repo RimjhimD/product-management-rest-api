@@ -12,8 +12,8 @@
 | Date    | Work Done / Tasks                              | Problems Faced                                      | Status / Fix                       |
 |---------|-----------------------------------------------|----------------------------------------------------|------------------------------------|
 | 4 Sep   | Worked on Backend setup                        | IntelliJ IDEA Ultimate crashed (using Community version)<br>Maven issue not found | Dependency error fixed<br>Maven issue unresolved |
-| 5 Sep   | Worked on Frontend                             | Couldn’t add product<br>Login/register pages didn’t load | Issue fixed                        |
-| 6 Sep   | The structure done<br>Frontend dashboard working | Pagination issues                                   | Not fixed                           |
+| 5 Sep   | Worked on Frontend                             | Couldn’t add product<br>Login/register pages didn’t load | not fixed  [Fetching or adding product issue fixed today]                   |
+| 6 Sep   | The structure done<br>Frontend dashboard working| Pagination issues                                   | Not fixed                           |
 
 ---
 
