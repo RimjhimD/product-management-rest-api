@@ -38,7 +38,7 @@ Quantity must be >= 5; otherwise, backend throws an error.
 
 Duplicate product names are not allowed.
 
-## **2. Get All Products (Paginated)
+## **2. Get All Products (Paginated)**
 GET /products?page={page}&size={size}
 
 Query Parameters:
@@ -76,7 +76,7 @@ Used for pagination in the frontend dashboard.
 
 Also used to calculate low-stock and recently added product statistics.
 
-## **3. Get Product by ID
+## **3. Get Product by ID**
 GET /products/{id}
 
 Response (200 OK):
@@ -98,7 +98,7 @@ Errors:
 
 404 Not Found if product with given ID does not exist.
 
-## **4. Update Product
+## **4. Update Product**
 PUT /products/{id}
 
 Request Body:
@@ -132,7 +132,7 @@ Backend checks for duplicate names.
 
 Quantity < 5 triggers an error.
 
-## **5. Delete Product
+## **5. Delete Product**
 DELETE /products/{id}
 
 Response:
@@ -144,7 +144,7 @@ Errors:
 404 Not Found if product does not exist.
 
 
-## **6. Search Products (Frontend Filtering)
+## **6. Search Products (Frontend Filtering)**
 Currently, the dashboard filters products by name on the frontend.
 
 Enter search term → filters products array → shows matching results.
@@ -152,7 +152,7 @@ Enter search term → filters products array → shows matching results.
 Partial matches are allowed (case-insensitive).
 
 
-## **7. Summary/Stats (Frontend Logic)
+## **7. Summary/Stats (Frontend Logic)**
 Total Products: Total number of products (totalElements).
 
 Low Stock: Products with quantity < 5.
@@ -160,7 +160,7 @@ Low Stock: Products with quantity < 5.
 Recently Added: Products created within the last 7 days.
 
 
-## **8. Pagination (Frontend Logic)
+## **8. Pagination (Frontend Logic)**
 Pagination buttons call GET /products with the correct page number.
 
 Previous button disabled if currentPage === 0.
@@ -168,11 +168,11 @@ Previous button disabled if currentPage === 0.
 Next button disabled if currentPage + 1 >= totalPages.
 
 
-## **9. Project Flow / Frontend-Backend Interaction
+## **9. Project Flow / Frontend-Backend Interaction**
 Frontend (React + MUI Dashboard)
 
 
-## **Diagram Flow
+## **Diagram Flow**
 
 ## Frontend
    |
