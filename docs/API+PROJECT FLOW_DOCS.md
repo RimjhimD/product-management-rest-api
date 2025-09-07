@@ -9,6 +9,7 @@ This document describes the REST API endpoints for the Product Management system
 **POST** `/products`
 
 **Request Body:**
+
 ```json
 {
   "name": "Laptop",
@@ -16,10 +17,11 @@ This document describes the REST API endpoints for the Product Management system
   "price": 1200.50,
   "quantity": 5
 }
+
 Response (201 Created):
 
 json
-Copy code
+
 {
   "id": 1,
   "name": "Laptop",
@@ -29,6 +31,7 @@ Copy code
   "createdAt": "2025-09-07T10:15:30",
   "updatedAt": "2025-09-07T10:15:30"
 }
+```
 Notes:
 
 Quantity must be >= 5; otherwise, backend throws an error.
@@ -46,8 +49,8 @@ size (integer, optional) – Number of products per page.
 
 Response (200 OK):
 
-json
-Copy code
+```json
+
 {
   "content": [
     {
@@ -65,6 +68,8 @@ Copy code
   "totalElements": 15,
   "size": 10
 }
+
+```
 Notes:
 
 Used for pagination in the frontend dashboard.
@@ -76,8 +81,8 @@ GET /products/{id}
 
 Response (200 OK):
 
-json
-Copy code
+```json
+
 {
   "id": 1,
   "name": "Laptop",
@@ -91,23 +96,26 @@ Errors:
 
 404 Not Found if product with given ID does not exist.
 
+```
+
 4. Update Product
 PUT /products/{id}
 
 Request Body:
 
-json
-Copy code
+```json
+
 {
   "name": "Laptop Pro",
   "description": "Upgraded laptop",
   "price": 1500.00,
   "quantity": 10
 }
+
 Response (200 OK):
 
 json
-Copy code
+
 {
   "id": 1,
   "name": "Laptop Pro",
@@ -117,6 +125,8 @@ Copy code
   "createdAt": "2025-09-07T10:15:30",
   "updatedAt": "2025-09-08T14:20:00"
 }
+
+```
 Notes:
 
 Backend checks for duplicate names.
@@ -133,6 +143,7 @@ Response:
 Errors:
 
 404 Not Found if product does not exist.
+
 
 6. Search Products (Frontend Filtering)
 Currently, the dashboard filters products by name on the frontend.
