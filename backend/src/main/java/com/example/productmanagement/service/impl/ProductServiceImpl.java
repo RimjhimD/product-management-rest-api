@@ -5,15 +5,12 @@ import com.example.productmanagement.repository.ProductRepository;
 import com.example.productmanagement.service.ProductService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @Transactional
@@ -27,13 +24,10 @@ public class ProductServiceImpl implements ProductService {
         this.productRepository = productRepository;
     }
 
-
-
     @Override
     public Product createProduct(Product product) {
         logger.info("Creating new product: {}", product.getName());
 
-        // Check if product with same name already exists
         if (productRepository.existsByNameIgnoreCase(product.getName())) {
             throw new IllegalArgumentException("Product with name '" + product.getName() + "' already exists");
         }
@@ -53,8 +47,7 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional(readOnly = true)
     public Page<Product> getAllProducts(Pageable pageable) {
-        logger.info("Retrieving all products with pagination: page={}, size={}",
-                pageable.getPageNumber(), pageable.getPageSize());
+        logger.info("Retrieving all products with pagination: page={}, size={}", pageable.getPageNumber(), pageable.getPageSize());
         return productRepository.findAll(pageable);
     }
 
@@ -73,13 +66,19 @@ public class ProductServiceImpl implements ProductService {
         Product existingProduct = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Product not found with ID: " + id));
 
-        // Check if another product with the same name exists (excluding current product)
         if (!existingProduct.getName().equalsIgnoreCase(product.getName()) &&
                 productRepository.existsByNameIgnoreCase(product.getName())) {
             throw new IllegalArgumentException("Product with name '" + product.getName() + "' already exists");
         }
 
-        // Update fields
+        if (product.getQuantity() < 0) {
+            throw new IllegalArgumentException("Quantity cannot be negative");
+        }
+
+        if (product.getQuantity() < 5) {
+            throw new IllegalArgumentException("Stock too low. Minimum allowed quantity is 5");
+        }
+
         existingProduct.setName(product.getName());
         existingProduct.setDescription(product.getDescription());
         existingProduct.setPrice(product.getPrice());
@@ -104,15 +103,15 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Product> searchProductsByName(String name) {
-        logger.info("Searching products by name: {}", name);
-        return productRepository.findByNameContainingIgnoreCase(name);
-    }
+    public Page<Product> searchProductsByName(String name, int page, int size, String sortBy, String sortDir) {
+        logger.info("Searching products by name: {} with pagination, page={}, size={}", name, page, size);
 
-    @Override
-    @Transactional(readOnly = true)
-    public Page<Product> searchProductsByName(String name, Pageable pageable) {
-        logger.info("Searching products by name: {} with pagination", name);
+        Sort sort = sortDir.equalsIgnoreCase("desc")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
         return productRepository.findByNameContainingIgnoreCase(name, pageable);
     }
 
