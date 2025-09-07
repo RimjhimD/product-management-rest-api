@@ -172,28 +172,34 @@ Next button disabled if currentPage + 1 >= totalPages.
 Frontend (React + MUI Dashboard)
 
 
+## Diagram Flow
 
-flowchart TD
-    A[Frontend (React + MUI Dashboard)] --> B[Fetch Products<br/>(GET /products?page=x&size=y)]
-    B --> C[Display in Table]
-    B --> D[Update Summary Cards<br/>(Total, Low Stock, Recently Added)]
-    
-    A --> E[Search Products<br/>(Frontend Filter)]
-    E --> F[Filters 'products' array by name]
+## Frontend
+   |
+   |-- Fetch products (GET /products?page=x&size=y)
+   |      -> Displays in Table
+   |      -> Updates Summary Cards (Total, Low Stock, Recently Added)
+   |
+   |-- Search products (Frontend filter)
+   |      -> Filters 'products' array by name
+   |
+   |-- Add / Edit Product
+   |      -> Opens Dialog
+   |      -> Submits (POST /products or PUT /products/{id})
+   |      -> On success: refreshes table & summary cards
+   |
+   |-- Delete Product
+          -> Sends DELETE /products/{id}
+          -> On success: refresh table & stats
+Backend (Spring Boot REST API)
 
-    A --> G[Add / Edit Product]
-    G --> H[Opens Dialog]
-    G --> I[Submits POST /products or PUT /products/{id}]
-    I --> J[On success: refresh table & summary cards]
 
-    A --> K[Delete Product]
-    K --> L[Sends DELETE /products/{id}]
-    L --> M[On success: refresh table & stats]
-
-    N[Backend (Spring Boot REST API)] --> O[CRUD operations]
-    N --> P[Pagination support]
-    N --> Q[Data validation (quantity >= 5, unique name)]
-    N --> R[Returns JSON responses]
+## Backend
+   |
+   |-- CRUD operations
+   |-- Pagination support
+   |-- Data validation (quantity >= 5, unique name)
+   |-- Returns JSON responses
 
 Notes:
 
