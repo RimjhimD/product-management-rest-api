@@ -103,6 +103,13 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<Product> searchProductsByName(String name) {
+        return productRepository.searchByNameIgnoreCase(name);
+    }
+
+
+    @Override
+    @Transactional(readOnly = true)
     public Page<Product> searchProductsByName(String name, int page, int size, String sortBy, String sortDir) {
         logger.info("Searching products by name: {} with pagination, page={}, size={}", name, page, size);
 
@@ -112,7 +119,7 @@ public class ProductServiceImpl implements ProductService {
 
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        return productRepository.findByNameContainingIgnoreCase(name, pageable);
+        return productRepository.searchByNameIgnoreCase(name, pageable);
     }
 
     @Override
