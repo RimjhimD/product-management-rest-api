@@ -1,6 +1,8 @@
+
 import axios from 'axios';
 
 const API_BASE_URL = 'http://localhost:8080';
+
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -9,11 +11,6 @@ const api = axios.create({
   },
 });
 
-const getPaginatedProducts = (page = 0, size = 10) =>
-  axios.get(`/products/paginated?page=${page}&size=${size}`);
-
-
-// Request interceptor
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -22,18 +19,15 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Response interceptor
 api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+
+
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';
@@ -42,135 +36,90 @@ api.interceptors.response.use(
   }
 );
 
-// Product API
+
 export const productAPI = {
-  // Get all products
   getAllProducts: (page = 0, size = 10, sortBy = 'id', sortDir = 'asc') => {
-    return api.get(`/products?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`);
-  },
+  return api.get(`/api/products?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`);
+},
 
-  // Get all products with pagination
-  getAllProductsPaginated: (page = 0, size = 10, sortBy = 'id', sortDir = 'asc') => {
-    return api.get(`/products/paginated?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`);
-  },
+getAllProductsPaginated: (page = 0, size = 10, sortBy = 'id', sortDir = 'asc') => {
 
-  // Get product by ID
-  getProductById: (id) => {
-    return api.get(`/products/${id}`);
-  },
 
-  // Create product
-  createProduct: (product) => {
-    return api.post('/products', product);
-  },
+  return api.get(`/api/products?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`);
+},
 
-  // Update product
-  updateProduct: (id, product) => {
-    return api.put(`/products/${id}`, product);
-  },
+getProductById: (id) => api.get(`/api/products/${id}`),
 
-  // Delete product
-  deleteProduct: (id) => {
-    return api.delete(`/products/${id}`);
-  },
+createProduct: (product) => api.post('/api/products', product),
 
-  // Search products by name
-  searchProductsByName: (name, page = 0, size = 10) => {
-    return api.get(`/products/search?name=${encodeURIComponent(name)}&page=${page}&size=${size}`);
-  },
+updateProduct: (id, product) => api.put(`/api/products/${id}`, product),
 
-  // Get products by stock
-  getProductsByStock: (quantity) => {
-    return api.get(`/products/stock?quantity=${quantity}`);
-  },
+deleteProduct: (id) => api.delete(`/api/products/${id}`),
 
-  // Get products by price range
-  getProductsByPriceRange: (minPrice, maxPrice) => {
-    return api.get(`/products/price?min=${minPrice}&max=${maxPrice}`);
-  },
+searchProductsByName: (name, page = 0, size = 10, sortBy = 'id', sortDir = 'asc') => {
+  return api.get(
+    `/api/products/search?name=${encodeURIComponent(name)}&page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`
+  );
+},
 
-  // Get products sorted by name
-  getProductsSortedByName: () => {
-    return api.get('/products/sorted/name');
-  },
 
-  // Get products sorted by price ascending
-  getProductsSortedByPriceAsc: () => {
-    return api.get('/products/sorted/price-asc');
-  },
+getProductsByStock: (quantity) => api.get(`/api/products/stock?quantity=${quantity}`),
+getProductsByPriceRange: (minPrice, maxPrice) => api.get(`/api/products/price?min=${minPrice}&max=${maxPrice}`),
+getProductsSortedByName: () => api.get('/api/products/sorted/name'),
+getProductsSortedByPriceAsc: () => api.get('/api/products/sorted/price-asc'),
+getProductsSortedByPriceDesc: () => api.get('/api/products/sorted/price-desc'),
+getProductsSortedByLatest: () => api.get('/api/products/sorted/latest'),
 
-  // Get products sorted by price descending
-  getProductsSortedByPriceDesc: () => {
-    return api.get('/products/sorted/price-desc');
-  },
-
-  // Get products sorted by latest
-  getProductsSortedByLatest: () => {
-    return api.get('/products/sorted/latest');
-  },
 };
 
-// Auth API (mock implementation for demo)
+
 export const authAPI = {
-  // Login
   login: (credentials) => {
-    // Mock login - in real app, this would call your auth endpoint
     return new Promise((resolve) => {
       setTimeout(() => {
         const mockUser = {
           id: 1,
           username: credentials.username,
           email: `${credentials.username}@example.com`,
-          role: 'admin'
+          role: 'admin',
         };
         const mockToken = 'mock-jwt-token-' + Date.now();
-
         localStorage.setItem('token', mockToken);
         localStorage.setItem('user', JSON.stringify(mockUser));
-
         resolve({ data: { user: mockUser, token: mockToken } });
-      }, 1000);
+      }, 800);
     });
   },
 
-  // Register
   register: (userData) => {
-    // Mock registration - in real app, this would call your auth endpoint
     return new Promise((resolve) => {
       setTimeout(() => {
         const mockUser = {
           id: Date.now(),
           username: userData.username,
           email: userData.email,
-          role: 'user'
+          role: 'user',
         };
         const mockToken = 'mock-jwt-token-' + Date.now();
-
         localStorage.setItem('token', mockToken);
         localStorage.setItem('user', JSON.stringify(mockUser));
-
         resolve({ data: { user: mockUser, token: mockToken } });
       }, 1000);
     });
   },
 
-  // Logout
   logout: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     return Promise.resolve();
   },
 
-  // Get current user
   getCurrentUser: () => {
     const user = localStorage.getItem('user');
     return user ? JSON.parse(user) : null;
   },
 
-  // Check if user is authenticated
-  isAuthenticated: () => {
-    return !!localStorage.getItem('token');
-  }
+  isAuthenticated: () => !!localStorage.getItem('token'),
 };
 
 export default api;
