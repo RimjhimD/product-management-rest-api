@@ -10,12 +10,13 @@ import Dashboard from './pages/Dashboard';
 
 const theme = createTheme({
   palette: {
-    primary: {
-      main: '#1976d2',
-    },
-    secondary: {
-      main: '#dc004e',
-    },
+    primary: { main: '#1976d2' },
+    secondary: { main: '#f50057' },
+    background: { default: '#f4f6f8' },
+    text: { primary: '#333', secondary: '#555' },
+  },
+  typography: {
+    fontFamily: 'Roboto, Arial, sans-serif',
   },
 });
 
@@ -36,7 +37,14 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route
+  path="/"
+  element={
+    <ProtectedRoute>
+      <Dashboard />
+    </ProtectedRoute>
+  }
+/>
           </Routes>
         </Router>
       </AuthProvider>
