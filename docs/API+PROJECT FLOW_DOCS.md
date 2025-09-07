@@ -20,7 +20,7 @@ This document describes the REST API endpoints for the Product Management system
 Response (201 Created):
 
 json
-Copy code
+
 {
   "id": 1,
   "name": "Laptop",
@@ -29,7 +29,9 @@ Copy code
   "quantity": 5,
   "createdAt": "2025-09-07T10:15:30",
   "updatedAt": "2025-09-07T10:15:30"
-}
+ } 
+```
+
 Notes:
 
 Quantity must be >= 5; otherwise, backend throws an error.
@@ -47,8 +49,8 @@ size (integer, optional) – Number of products per page.
 
 Response (200 OK):
 
-json
-Copy code
+```json
+
 {
   "content": [
     {
@@ -66,6 +68,8 @@ Copy code
   "totalElements": 15,
   "size": 10
 }
+```
+
 Notes:
 
 Used for pagination in the frontend dashboard.
@@ -77,8 +81,8 @@ GET /products/{id}
 
 Response (200 OK):
 
-json
-Copy code
+```json
+
 {
   "id": 1,
   "name": "Laptop",
@@ -88,6 +92,8 @@ Copy code
   "createdAt": "2025-09-07T10:15:30",
   "updatedAt": "2025-09-07T10:15:30"
 }
+
+```
 Errors:
 
 404 Not Found if product with given ID does not exist.
@@ -97,8 +103,8 @@ PUT /products/{id}
 
 Request Body:
 
-json
-Copy code
+```json
+
 {
   "name": "Laptop Pro",
   "description": "Upgraded laptop",
@@ -108,7 +114,7 @@ Copy code
 Response (200 OK):
 
 json
-Copy code
+
 {
   "id": 1,
   "name": "Laptop Pro",
@@ -118,6 +124,8 @@ Copy code
   "createdAt": "2025-09-07T10:15:30",
   "updatedAt": "2025-09-08T14:20:00"
 }
+
+```
 Notes:
 
 Backend checks for duplicate names.
@@ -135,12 +143,14 @@ Errors:
 
 404 Not Found if product does not exist.
 
+
 6. Search Products (Frontend Filtering)
 Currently, the dashboard filters products by name on the frontend.
 
 Enter search term → filters products array → shows matching results.
 
 Partial matches are allowed (case-insensitive).
+
 
 7. Summary/Stats (Frontend Logic)
 Total Products: Total number of products (totalElements).
@@ -149,12 +159,14 @@ Low Stock: Products with quantity < 5.
 
 Recently Added: Products created within the last 7 days.
 
+
 8. Pagination (Frontend Logic)
 Pagination buttons call GET /products with the correct page number.
 
 Previous button disabled if currentPage === 0.
 
 Next button disabled if currentPage + 1 >= totalPages.
+
 
 9. Project Flow / Frontend-Backend Interaction
 Frontend (React + MUI Dashboard)
