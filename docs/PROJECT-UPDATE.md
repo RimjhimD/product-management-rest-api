@@ -13,7 +13,8 @@
 |---------|-----------------------------------------------|----------------------------------------------------|------------------------------------|
 | 4 Sep   | Worked on Backend setup                        | IntelliJ IDEA Ultimate crashed (using Community version)<br>Maven issue not found | Dependency error fixed<br>Maven issue unresolved |
 | 5 Sep   | Worked on Frontend                             | Couldn’t add product<br>Login/register pages didn’t load | not fixed  [Fetching or adding product issue fixed today 6 Sep]                   |
-| 6 Sep   | The structure done<br>Frontend dashboard working| Pagination issues                                   | Not fixed                           |
+| 6 Sep   | The structure done<br>Frontend dashboard working| Pagination issues                                   | Not fixed   (fixed in 7 Sep)                        |
+| 7 Sep   | Fixed several bugs in frontend and backend:<br>- Improved design of dashboard cards<br>- Added stock availability check<br>- Worked on product table display and dialogs | Search not fully working: results only show for current page, not across all pages | Partially fixed (pagination/search issue still needs proper implementation) |
 
 ---
 
