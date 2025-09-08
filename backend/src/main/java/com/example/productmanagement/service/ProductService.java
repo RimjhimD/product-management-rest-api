@@ -31,6 +31,9 @@ public interface ProductService {
 
     Page<Product> searchProductsByName(String name, int page, int size, String sortBy, String sortDir);
 
+    // Enhanced search method
+    Page<Product> searchProducts(String searchTerm, Pageable pageable);
+
 
 
     List<Product> getProductsByQuantityGreaterThan(Integer quantity);

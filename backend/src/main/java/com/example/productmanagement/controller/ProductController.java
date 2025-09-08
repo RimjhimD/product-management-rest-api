@@ -14,7 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/products")
+@RequestMapping("/products")
 @CrossOrigin(origins = "*")
 public class ProductController {
 
@@ -40,13 +40,14 @@ public class ProductController {
         }
     }
 
-    // ✅ Get all products with pagination + sorting
+    // ✅ Get all products with pagination + sorting + search
     @GetMapping
     public ResponseEntity<Page<Product>> getAllProducts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "asc") String sortDir) {
+            @RequestParam(defaultValue = "asc") String sortDir,
+            @RequestParam(required = false) String search) {
 
         try {
             Sort sort = sortDir.equalsIgnoreCase("desc")
@@ -54,7 +55,13 @@ public class ProductController {
                     : Sort.by(sortBy).ascending();
 
             Pageable pageable = PageRequest.of(page, size, sort);
-            Page<Product> productPage = productService.getAllProducts(pageable);
+            Page<Product> productPage;
+
+            if (search != null && !search.trim().isEmpty()) {
+                productPage = productService.searchProducts(search.trim(), pageable);
+            } else {
+                productPage = productService.getAllProducts(pageable);
+            }
 
             return ResponseEntity.ok(productPage);
         } catch (Exception e) {

@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container, Typography, Box, Button, TextField, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow, Paper, IconButton,
   Dialog, DialogTitle, DialogContent, DialogActions, Alert,
-  CircularProgress, Grid, Card, CardContent, Chip, InputAdornment
+  CircularProgress, Grid, Card, CardContent, Chip, InputAdornment,
+  FormControl, InputLabel, Select, MenuItem, Snackbar
 } from '@mui/material';
 
 import AddIcon from "@mui/icons-material/Add";
@@ -14,6 +15,8 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import Inventory2Icon from "@mui/icons-material/Inventory2";
 import NewReleasesIcon from "@mui/icons-material/NewReleases";
 import LowPriorityIcon from "@mui/icons-material/LowPriority";
+import ArrowUpward from "@mui/icons-material/ArrowUpward";
+import ArrowDownward from "@mui/icons-material/ArrowDownward";
 
 import { useAuth } from '../context/AuthContext';
 import { productAPI } from '../services/api';
@@ -32,24 +35,37 @@ const Dashboard = () => {
   const { user, logout } = useAuth();
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
   const [pageSize, setPageSize] = useState(10);
 
   const [totalProducts, setTotalProducts] = useState(0);
   const [lowStockCount, setLowStockCount] = useState(0);
   const [recentAddedCount, setRecentAddedCount] = useState(0);
 
-  const [quantityWarning, setQuantityWarning] = useState(false); // New
+  const [quantityWarning, setQuantityWarning] = useState(false);
+  
+  // New sorting and snackbar states
+  const [sortBy, setSortBy] = useState('id');
+  const [sortDirection, setSortDirection] = useState('asc');
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
-  useEffect(() => { fetchProducts(0); }, [pageSize]);
+  useEffect(() => { fetchProducts(); }, [pageSize, sortBy, sortDirection, searchTerm]);
 
-  const fetchProducts = async (page = 0) => {
+  const fetchProducts = useCallback(async (page = currentPage) => {
     try {
       setLoading(true);
-      const response = await productAPI.getAllProductsPaginated(page, pageSize);
+      const response = await productAPI.getAllProductsPaginated(
+        page, 
+        pageSize, 
+        sortBy, 
+        sortDirection, 
+        searchTerm
+      );
       const fetchedProducts = response.data.content || [];
       setProducts(fetchedProducts);
       setCurrentPage(response.data.number || 0);
       setTotalPages(response.data.totalPages || 1);
+      setTotalElements(response.data.totalElements || 0);
 
       // Summary stats
       setTotalProducts(response.data.totalElements || fetchedProducts.length);
@@ -60,18 +76,28 @@ const Dashboard = () => {
         return (today - created) / (1000 * 60 * 60 * 24) <= 7;
       });
       setRecentAddedCount(recent.length);
-    } catch (error) { setError('Failed to fetch products'); }
+      setError('');
+    } catch (error) { 
+      console.error('Error fetching products:', error);
+      setError('Failed to load products'); 
+    }
     finally { setLoading(false); }
+  }, [currentPage, pageSize, sortBy, sortDirection, searchTerm]);
+
+  const handleSortChange = (event) => {
+    setSortBy(event.target.value);
+    setCurrentPage(0);
   };
 
-const handleSearch = () => {
-  const term = searchTerm.trim().toLowerCase();
-  if (!term) return fetchProducts(0);
+  const toggleSortDirection = () => {
+    setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    setCurrentPage(0);
+  };
 
-  const results = products.filter(p => p.name.toLowerCase().includes(term));
-  setProducts(results);
-  setError(results.length === 0 ? `No products found for "${term}"` : '');
-};
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value);
+    setCurrentPage(0);
+  };
 
 
   const handleOpenDialog = (product = null) => {
@@ -125,23 +151,40 @@ const handleSearch = () => {
       }
 
       handleCloseDialog();
-      fetchProducts(currentPage);
-
-      setTimeout(() => setSuccess(''), 3000);
+      fetchProducts();
+      setSnackbar({
+        open: true,
+        message: editingProduct ? 'Product updated successfully!' : 'Product created successfully!',
+        severity: 'success'
+      });
     } catch (error) {
       setError(editingProduct ? 'Failed to update product' : 'Failed to create product');
       console.error(error);
     } finally { setLoading(false); }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this product?')) return;
-    try {
-      setLoading(true);
-      await productAPI.deleteProduct(id);
-      fetchProducts(currentPage);
-    } catch (error) { setError('Failed to delete product'); }
-    finally { setLoading(false); }
+  const handleDeleteProduct = async (productId) => {
+    if (window.confirm('Are you sure you want to delete this product?')) {
+      try {
+        await productAPI.deleteProduct(productId);
+        setSnackbar({
+          open: true,
+          message: 'Product deleted successfully!',
+          severity: 'success'
+        });
+        fetchProducts();
+      } catch (error) {
+        setSnackbar({
+          open: true,
+          message: 'Failed to delete product',
+          severity: 'error'
+        });
+      }
+    }
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
   };
 
   return (
@@ -168,125 +211,527 @@ const handleSearch = () => {
         </Box>
       </Box>
 
-      {/* Summary Cards */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={3}>
-          <Card sx={{ backgroundColor: '#1976d2', color: '#fff', boxShadow: 3 }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Inventory2Icon fontSize="large" />
-                <Typography variant="h6">Total Products</Typography>
+      {/* Enhanced Summary Cards */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={4}>
+          <Card sx={{ 
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: '#fff', 
+            boxShadow: '0 8px 32px rgba(102, 126, 234, 0.3)',
+            borderRadius: 3,
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              transform: 'translateY(-5px)',
+              boxShadow: '0 12px 40px rgba(102, 126, 234, 0.4)'
+            }
+          }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>Total Products</Typography>
+                  <Typography variant="h3" sx={{ fontWeight: 700 }}>{totalProducts}</Typography>
+                </Box>
+                <Box sx={{ 
+                  backgroundColor: 'rgba(255,255,255,0.2)', 
+                  borderRadius: '50%', 
+                  p: 2,
+                  backdropFilter: 'blur(10px)'
+                }}>
+                  <Inventory2Icon sx={{ fontSize: 40 }} />
+                </Box>
               </Box>
-              <Typography variant="h4" sx={{ mt: 1 }}>{totalProducts}</Typography>
+              <Typography variant="body2" sx={{ opacity: 0.9 }}>📊 Total inventory items</Typography>
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={3}>
-          <Card sx={{ backgroundColor: '#fbc02d', color: '#fff', boxShadow: 3 }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <LowPriorityIcon fontSize="large" />
-                <Typography variant="h6">Low Stock</Typography>
+        
+        <Grid item xs={12} sm={4}>
+          <Card sx={{ 
+            background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            color: '#fff', 
+            boxShadow: '0 8px 32px rgba(245, 87, 108, 0.3)',
+            borderRadius: 3,
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              transform: 'translateY(-5px)',
+              boxShadow: '0 12px 40px rgba(245, 87, 108, 0.4)'
+            }
+          }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>Low Stock Alert</Typography>
+                  <Typography variant="h3" sx={{ fontWeight: 700 }}>{lowStockCount}</Typography>
+                </Box>
+                <Box sx={{ 
+                  backgroundColor: 'rgba(255,255,255,0.2)', 
+                  borderRadius: '50%', 
+                  p: 2,
+                  backdropFilter: 'blur(10px)'
+                }}>
+                  <LowPriorityIcon sx={{ fontSize: 40 }} />
+                </Box>
               </Box>
-              <Typography variant="h4" sx={{ mt: 1 }}>{lowStockCount}</Typography>
+              <Typography variant="body2" sx={{ opacity: 0.9 }}>⚠️ Items below 5 quantity</Typography>
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={3}>
-          <Card sx={{ backgroundColor: '#388e3c', color: '#fff', boxShadow: 3 }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <NewReleasesIcon fontSize="large" />
-                <Typography variant="h6">Recently Added</Typography>
+        
+        <Grid item xs={12} sm={4}>
+          <Card sx={{ 
+            background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+            color: '#fff', 
+            boxShadow: '0 8px 32px rgba(79, 172, 254, 0.3)',
+            borderRadius: 3,
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              transform: 'translateY(-5px)',
+              boxShadow: '0 12px 40px rgba(79, 172, 254, 0.4)'
+            }
+          }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                <Box>
+                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 0.5 }}>Recently Added</Typography>
+                  <Typography variant="h3" sx={{ fontWeight: 700 }}>{recentAddedCount}</Typography>
+                </Box>
+                <Box sx={{ 
+                  backgroundColor: 'rgba(255,255,255,0.2)', 
+                  borderRadius: '50%', 
+                  p: 2,
+                  backdropFilter: 'blur(10px)'
+                }}>
+                  <NewReleasesIcon sx={{ fontSize: 40 }} />
+                </Box>
               </Box>
-              <Typography variant="h4" sx={{ mt: 1 }}>{recentAddedCount}</Typography>
+              <Typography variant="body2" sx={{ opacity: 0.9 }}>🆕 Added in last 7 days</Typography>
             </CardContent>
           </Card>
         </Grid>
       </Grid>
 
-      {/* Search & Actions */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} md={8}>
-          <TextField
-            fullWidth
-            placeholder="Search products..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton onClick={handleSearch}><SearchIcon /></IconButton>
-                </InputAdornment>
-              )
-            }}
-            sx={{ backgroundColor: '#fff', borderRadius: 2, boxShadow: 1 }}
-          />
+      {/* Enhanced Search & Controls Section */}
+      <Card sx={{ mb: 3, p: 3, boxShadow: 3, borderRadius: 3, background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)' }}>
+        <Typography variant="h6" sx={{ mb: 2, color: '#2c3e50', fontWeight: 600 }}>
+          🔍 Search & Sort Controls
+        </Typography>
+        
+        <Grid container spacing={3} alignItems="center">
+          {/* Search Bar */}
+          <Grid item xs={12} md={5}>
+            <TextField
+              fullWidth
+              placeholder="🔎 Search products by name or description..."
+              value={searchTerm}
+              onChange={handleSearchChange}
+              variant="outlined"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ color: '#1976d2' }} />
+                  </InputAdornment>
+                ),
+                sx: {
+                  backgroundColor: '#fff',
+                  borderRadius: 3,
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': { borderColor: '#1976d2' },
+                    '&.Mui-focused fieldset': { borderColor: '#1976d2' }
+                  }
+                }
+              }}
+              sx={{ 
+                '& .MuiInputLabel-root': { color: '#666' },
+                '& .MuiOutlinedInput-root': {
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                  transition: 'all 0.3s ease'
+                }
+              }}
+            />
+          </Grid>
+
+          {/* Sort Controls */}
+          <Grid item xs={12} md={4}>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel sx={{ color: '#666', fontSize: '0.9rem' }}>📊 Sort By</InputLabel>
+                <Select 
+                  value={sortBy} 
+                  onChange={handleSortChange}
+                  label="📊 Sort By"
+                  sx={{ 
+                    backgroundColor: '#fff', 
+                    borderRadius: 2,
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#e0e0e0'
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#1976d2'
+                    },
+                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#1976d2'
+                    }
+                  }}
+                >
+                  <MenuItem value="id">🆔 ID</MenuItem>
+                  <MenuItem value="name">📝 Name</MenuItem>
+                  <MenuItem value="price">💰 Price</MenuItem>
+                  <MenuItem value="quantity">📦 Quantity</MenuItem>
+                  <MenuItem value="createdAt">📅 Date Created</MenuItem>
+                </Select>
+              </FormControl>
+              
+              <IconButton 
+                onClick={toggleSortDirection}
+                sx={{ 
+                  backgroundColor: '#fff',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                  borderRadius: 2,
+                  width: 48,
+                  height: 48,
+                  border: '2px solid #e0e0e0',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    backgroundColor: '#1976d2',
+                    color: '#fff',
+                    borderColor: '#1976d2',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 4px 12px rgba(25,118,210,0.3)'
+                  }
+                }}
+                title={`Sort ${sortDirection === 'asc' ? 'Ascending' : 'Descending'}`}
+              >
+                {sortDirection === 'asc' ? <ArrowUpward /> : <ArrowDownward />}
+              </IconButton>
+            </Box>
+          </Grid>
+
+          {/* Action Buttons */}
+          <Grid item xs={12} md={3}>
+            <Box sx={{ display: 'flex', gap: 1.5 }}>
+              <Button 
+                variant="contained" 
+                startIcon={<AddIcon />} 
+                onClick={() => handleOpenDialog()}
+                sx={{ 
+                  flexGrow: 1,
+                  background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+                  borderRadius: 2,
+                  boxShadow: '0 3px 10px rgba(33, 203, 243, 0.3)',
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  py: 1.2,
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    background: 'linear-gradient(45deg, #1976D2 30%, #1CB5E0 90%)',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 5px 15px rgba(33, 203, 243, 0.4)'
+                  }
+                }}
+              >
+                Add Product
+              </Button>
+              
+              <IconButton 
+                onClick={() => fetchProducts()} 
+                disabled={loading}
+                sx={{ 
+                  backgroundColor: '#fff',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                  borderRadius: 2,
+                  width: 48,
+                  height: 48,
+                  border: '2px solid #e0e0e0',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    backgroundColor: '#4caf50',
+                    color: '#fff',
+                    borderColor: '#4caf50',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 4px 12px rgba(76,175,80,0.3)'
+                  },
+                  '&:disabled': {
+                    backgroundColor: '#f5f5f5',
+                    color: '#bdbdbd'
+                  }
+                }}
+                title="Refresh Products"
+              >
+                <RefreshIcon />
+              </IconButton>
+            </Box>
+          </Grid>
         </Grid>
-        <Grid item xs={12} md={4}>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpenDialog()} fullWidth>
-              Add Product
-            </Button>
-            <IconButton onClick={() => fetchProducts(currentPage)} disabled={loading}><RefreshIcon /></IconButton>
+      </Card>
+
+      {/* Snackbar for notifications - positioned above inventory */}
+      {snackbar.open && (
+        <Alert 
+          onClose={handleCloseSnackbar} 
+          severity={snackbar.severity} 
+          sx={{ 
+            mb: 2,
+            borderRadius: 2,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+          }}
+        >
+          {snackbar.message}
+        </Alert>
+      )}
+
+      {/* Enhanced Products Table */}
+      <Card sx={{ 
+        boxShadow: '0 8px 32px rgba(0,0,0,0.1)', 
+        borderRadius: 3,
+        background: 'linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)'
+      }}>
+        <CardContent sx={{ p: 0 }}>
+          <Box sx={{ 
+            p: 3, 
+            borderBottom: '1px solid #e0e0e0',
+            background: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)',
+            borderRadius: '12px 12px 0 0'
+          }}>
+            <Typography variant="h5" sx={{ 
+              color: '#fff', 
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1
+            }}>
+              📋 Products Inventory
+              <Chip 
+                label={`${products.length} of ${totalElements}`} 
+                sx={{ 
+                  backgroundColor: 'rgba(255,255,255,0.2)',
+                  color: '#fff',
+                  fontWeight: 600,
+                  backdropFilter: 'blur(10px)'
+                }} 
+              />
+            </Typography>
           </Box>
-        </Grid>
-      </Grid>
-
-      {/* Alerts */}
-      {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>{error}</Alert>}
-      {success && <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess('')}>{success}</Alert>}
-
-      {/* Products Table */}
-      <Card sx={{ boxShadow: 3, borderRadius: 2 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>Products ({products.length})</Typography>
-          {loading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>
-          ) : (
-            <TableContainer component={Paper} variant="outlined">
-              <Table>
-                <TableHead sx={{ backgroundColor: '#1976d2' }}>
-                  <TableRow>
-                    {['ID','Name','Description','Price','Quantity','Created','Actions'].map((head,i)=>(
-                      <TableCell key={i} sx={{ color:'#fff' }}>{head}</TableCell>
-                    ))}
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {products.map(product => (
-                    <TableRow key={product.id} sx={{
-                      '&:nth-of-type(odd)': { backgroundColor: '#f9f9f9' },
-                      '&:hover': { backgroundColor: '#e3f2fd', cursor: 'pointer' }
-                    }}>
-                      <TableCell>{product.id}</TableCell>
-                      <TableCell>{product.name}</TableCell>
-                      <TableCell>{product.description.length>50 ? `${product.description.substring(0,50)}...` : product.description}</TableCell>
-                      <TableCell align="right">${product.price}</TableCell>
-                      <TableCell align="right">
-                        {product.quantity}
-                        {product.quantity < 5 && (
-                          <Chip label="Low Stock" color="error" size="small" sx={{ ml: 1 }} />
-                        )}
-                      </TableCell>
-                      <TableCell>{new Date(product.createdAt).toLocaleDateString()}</TableCell>
-                      <TableCell align="center">
-                        <IconButton size="small" onClick={() => handleOpenDialog(product)}><EditIcon /></IconButton>
-                        <IconButton size="small" color="error" onClick={() => handleDelete(product.id)}><DeleteIcon /></IconButton>
-                      </TableCell>
+          <Box sx={{ p: 3 }}>
+            {loading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', p: 6 }}>
+                <CircularProgress size={60} sx={{ color: '#667eea' }} />
+              </Box>
+            ) : (
+              <TableContainer sx={{ 
+                borderRadius: 2, 
+                boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                border: '1px solid #e0e0e0'
+              }}>
+                <Table>
+                  <TableHead>
+                    <TableRow sx={{ background: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)' }}>
+                      {[
+                        { label: '🆔 ID', align: 'left' },
+                        { label: '📝 Name', align: 'left' },
+                        { label: '📄 Description', align: 'left' },
+                        { label: '💰 Price', align: 'right' },
+                        { label: '📦 Quantity', align: 'right' },
+                        { label: '📅 Created', align: 'left' },
+                        { label: '⚡ Actions', align: 'center' }
+                      ].map((head, i) => (
+                        <TableCell 
+                          key={i} 
+                          align={head.align}
+                          sx={{ 
+                            color: '#fff', 
+                            fontWeight: 700,
+                            fontSize: '0.95rem',
+                            py: 2
+                          }}
+                        >
+                          {head.label}
+                        </TableCell>
+                      ))}
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
+                  </TableHead>
+                  <TableBody>
+                    {products.map((product, index) => (
+                      <TableRow 
+                        key={product.id} 
+                        sx={{
+                          '&:nth-of-type(even)': { 
+                            backgroundColor: '#f8f9fa' 
+                          },
+                          '&:hover': { 
+                            backgroundColor: '#e3f2fd',
+                            transform: 'scale(1.01)',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                            transition: 'all 0.2s ease'
+                          },
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <TableCell sx={{ fontWeight: 600, color: '#667eea' }}>
+                          #{product.id}
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 600, color: '#2c3e50' }}>
+                          {product.name}
+                        </TableCell>
+                        <TableCell sx={{ color: '#666', maxWidth: 200 }}>
+                          {product.description.length > 50 
+                            ? `${product.description.substring(0, 50)}...` 
+                            : product.description
+                          }
+                        </TableCell>
+                        <TableCell align="right" sx={{ fontWeight: 700, color: '#27ae60' }}>
+                          ${product.price}
+                        </TableCell>
+                        <TableCell align="right">
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
+                            <Typography sx={{ 
+                              fontWeight: 600,
+                              color: product.quantity < 5 ? '#e74c3c' : '#27ae60'
+                            }}>
+                              {product.quantity}
+                            </Typography>
+                            {product.quantity < 5 && (
+                              <Chip 
+                                label="⚠️ Low" 
+                                size="small"
+                                sx={{ 
+                                  backgroundColor: '#ffebee',
+                                  color: '#e74c3c',
+                                  fontWeight: 600,
+                                  fontSize: '0.7rem'
+                                }} 
+                              />
+                            )}
+                          </Box>
+                        </TableCell>
+                        <TableCell sx={{ color: '#666' }}>
+                          {new Date(product.createdAt).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell align="center">
+                          <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
+                            <IconButton 
+                              size="small" 
+                              onClick={() => handleOpenDialog(product)}
+                              sx={{
+                                backgroundColor: '#e3f2fd',
+                                color: '#1976d2',
+                                '&:hover': {
+                                  backgroundColor: '#1976d2',
+                                  color: '#fff',
+                                  transform: 'scale(1.1)'
+                                },
+                                transition: 'all 0.2s ease'
+                              }}
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton 
+                              size="small" 
+                              onClick={() => handleDeleteProduct(product.id)}
+                              sx={{
+                                backgroundColor: '#ffebee',
+                                color: '#f44336',
+                                '&:hover': {
+                                  backgroundColor: '#f44336',
+                                  color: '#fff',
+                                  transform: 'scale(1.1)'
+                                },
+                                transition: 'all 0.2s ease'
+                              }}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+          </Box>
 
-          {/* Pagination */}
-          <Box sx={{ display: "flex", justifyContent: "center", gap: 2, mt: 2 }}>
-            <Button disabled={currentPage === 0} onClick={() => fetchProducts(currentPage - 1)}>Previous</Button>
-            <Typography sx={{ display: 'flex', alignItems: 'center' }}>Page {currentPage + 1} of {totalPages}</Typography>
-            <Button disabled={currentPage + 1 >= totalPages} onClick={() => fetchProducts(currentPage + 1)}>Next</Button>
+          {/* Enhanced Pagination */}
+          <Box sx={{ 
+            display: "flex", 
+            justifyContent: "center", 
+            alignItems: 'center',
+            gap: 2, 
+            mt: 3,
+            p: 2,
+            borderTop: '1px solid #e0e0e0',
+            backgroundColor: '#f8f9fa'
+          }}>
+            <Button 
+              disabled={currentPage === 0} 
+              onClick={() => {
+                const newPage = currentPage - 1;
+                setCurrentPage(newPage);
+                fetchProducts(newPage);
+              }}
+              variant="outlined"
+              sx={{
+                borderRadius: 2,
+                textTransform: 'none',
+                fontWeight: 600,
+                px: 3,
+                '&:disabled': {
+                  backgroundColor: '#f5f5f5',
+                  color: '#bdbdbd'
+                },
+                '&:not(:disabled)': {
+                  borderColor: '#667eea',
+                  color: '#667eea',
+                  '&:hover': {
+                    backgroundColor: '#667eea',
+                    color: '#fff'
+                  }
+                }
+              }}
+            >
+              ← Previous
+            </Button>
+            
+            <Chip 
+              label={`Page ${currentPage + 1} of ${totalPages}`}
+              sx={{ 
+                backgroundColor: '#667eea',
+                color: '#fff',
+                fontWeight: 600,
+                px: 2,
+                fontSize: '0.9rem'
+              }}
+            />
+            
+            <Button 
+              disabled={currentPage + 1 >= totalPages} 
+              onClick={() => {
+                const newPage = currentPage + 1;
+                setCurrentPage(newPage);
+                fetchProducts(newPage);
+              }}
+              variant="outlined"
+              sx={{
+                borderRadius: 2,
+                textTransform: 'none',
+                fontWeight: 600,
+                px: 3,
+                '&:disabled': {
+                  backgroundColor: '#f5f5f5',
+                  color: '#bdbdbd'
+                },
+                '&:not(:disabled)': {
+                  borderColor: '#667eea',
+                  color: '#667eea',
+                  '&:hover': {
+                    backgroundColor: '#667eea',
+                    color: '#fff'
+                  }
+                }
+              }}
+            >
+              Next →
+            </Button>
           </Box>
         </CardContent>
       </Card>
@@ -337,6 +782,7 @@ const handleSearch = () => {
           </DialogActions>
         </form>
       </Dialog>
+
     </Container>
   );
 };

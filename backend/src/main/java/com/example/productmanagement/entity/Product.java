@@ -22,7 +22,7 @@ public class Product {
     private String name;
 
     @NotBlank(message = "Product description is required")
-    @Size(min = 10, max = 500, message = "Product description must be between 10 and 500 characters")
+    @Size(min = 2, max = 500, message = "Product description must be between 2 and 500 characters")
     @Column(name = "description", nullable = false, columnDefinition = "TEXT")
     private String description;
 

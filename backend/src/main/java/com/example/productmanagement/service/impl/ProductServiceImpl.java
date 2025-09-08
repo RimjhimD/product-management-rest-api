@@ -75,9 +75,10 @@ public class ProductServiceImpl implements ProductService {
             throw new IllegalArgumentException("Quantity cannot be negative");
         }
 
-        if (product.getQuantity() < 5) {
-            throw new IllegalArgumentException("Stock too low. Minimum allowed quantity is 5");
-        }
+        // Commented out minimum quantity restriction of 5
+        // if (product.getQuantity() < 5) {
+        //     throw new IllegalArgumentException("Stock too low. Minimum allowed quantity is 5");
+        // }
 
         existingProduct.setName(product.getName());
         existingProduct.setDescription(product.getDescription());
@@ -169,5 +170,12 @@ public class ProductServiceImpl implements ProductService {
     public List<Product> getAllProductsOrderedByCreatedDateDesc() {
         logger.info("Retrieving all products ordered by created date descending");
         return productRepository.findAllByOrderByCreatedAtDesc();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Product> searchProducts(String searchTerm, Pageable pageable) {
+        logger.info("Searching products with term: {} with pagination", searchTerm);
+        return productRepository.findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(searchTerm, pageable);
     }
 }

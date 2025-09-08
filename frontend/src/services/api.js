@@ -38,37 +38,57 @@ api.interceptors.response.use(
 
 
 export const productAPI = {
-  getAllProducts: (page = 0, size = 10, sortBy = 'id', sortDir = 'asc') => {
-  return api.get(`/api/products?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`);
-},
+  getAllProducts: (page = 0, size = 10, sortBy = 'id', sortDir = 'asc', search = '') => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      size: size.toString(),
+      sortBy,
+      sortDir
+    });
+    
+    if (search && search.trim()) {
+      params.append('search', search.trim());
+    }
+    
+    return api.get(`/products?${params}`);
+  },
 
-getAllProductsPaginated: (page = 0, size = 10, sortBy = 'id', sortDir = 'asc') => {
+  getAllProductsPaginated: (page = 0, size = 10, sortBy = 'id', sortDir = 'asc', search = '') => {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      size: size.toString(),
+      sortBy,
+      sortDir
+    });
+    
+    if (search && search.trim()) {
+      params.append('search', search.trim());
+    }
+    
+    return api.get(`/products?${params}`);
+  },
+
+  getProductById: (id) => api.get(`/products/${id}`),
+
+  createProduct: (product) => api.post('/products', product),
+
+  updateProduct: (id, product) => api.put(`/products/${id}`, product),
+
+  deleteProduct: (id) => api.delete(`/products/${id}`),
+
+  searchProductsByName: (name, page = 0, size = 10, sortBy = 'id', sortDir = 'asc') => {
+    return api.get(
+      `/products/search?name=${encodeURIComponent(name)}&page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`
+    );
+  },
 
 
-  return api.get(`/api/products?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`);
-},
-
-getProductById: (id) => api.get(`/api/products/${id}`),
-
-createProduct: (product) => api.post('/api/products', product),
-
-updateProduct: (id, product) => api.put(`/api/products/${id}`, product),
-
-deleteProduct: (id) => api.delete(`/api/products/${id}`),
-
-searchProductsByName: (name, page = 0, size = 10, sortBy = 'id', sortDir = 'asc') => {
-  return api.get(
-    `/api/products/search?name=${encodeURIComponent(name)}&page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`
-  );
-},
-
-
-getProductsByStock: (quantity) => api.get(`/api/products/stock?quantity=${quantity}`),
-getProductsByPriceRange: (minPrice, maxPrice) => api.get(`/api/products/price?min=${minPrice}&max=${maxPrice}`),
-getProductsSortedByName: () => api.get('/api/products/sorted/name'),
-getProductsSortedByPriceAsc: () => api.get('/api/products/sorted/price-asc'),
-getProductsSortedByPriceDesc: () => api.get('/api/products/sorted/price-desc'),
-getProductsSortedByLatest: () => api.get('/api/products/sorted/latest'),
+getProductsByStock: (quantity) => api.get(`/products/stock?quantity=${quantity}`),
+getProductsByPriceRange: (minPrice, maxPrice) => api.get(`/products/price?min=${minPrice}&max=${maxPrice}`),
+getProductsSortedByName: () => api.get('/products/sorted/name'),
+getProductsSortedByPriceAsc: () => api.get('/products/sorted/price-asc'),
+getProductsSortedByPriceDesc: () => api.get('/products/sorted/price-desc'),
+getProductsSortedByLatest: () => api.get('/products/sorted/latest'),
 
 };
 
