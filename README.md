@@ -112,7 +112,7 @@ Before you begin, ensure you have the following installed:
 4. **Configure Database Connection**
    ```properties
    # backend/src/main/resources/application.properties
-   spring.datasource.url=jdbc:mysql://localhost:3306/product_management
+   spring.datasource.url=jdbc:mysql://localhost:3306/product_db
    spring.datasource.username=root
    spring.datasource.password=
    spring.jpa.hibernate.ddl-auto=update
