@@ -105,8 +105,8 @@ Before you begin, ensure you have the following installed:
 3. **Create Database**
    ```sql
    # Access phpMyAdmin: http://localhost/phpmyadmin
-   # Create new database: product_management
-   CREATE DATABASE product_management;
+   # Create new database: product_db
+   CREATE DATABASE product_db;
    ```
 
 4. **Configure Database Connection**
@@ -283,7 +283,7 @@ This project is licensed under the terms of the [LICENSE](LICENSE) file included
 
 **⭐ Star this repository if you found it helpful!**
 
-Made with ❤️ by [Your Name]
+
 
 </div>
 
