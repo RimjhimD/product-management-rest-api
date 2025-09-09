@@ -1,5 +1,7 @@
 package com.example.productmanagement.controller;
 
+import com.example.productmanagement.dto.Request.ProductRequest;
+import com.example.productmanagement.dto.Response.ProductResponse;
 import com.example.productmanagement.entity.Product;
 import com.example.productmanagement.service.ProductService;
 import jakarta.validation.Valid;
@@ -12,10 +14,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/products")
-@CrossOrigin(origins = "*")
 public class ProductController {
 
     private static final Logger logger = LoggerFactory.getLogger(ProductController.class);
@@ -26,23 +28,26 @@ public class ProductController {
         this.productService = productService;
     }
 
-    // ✅ Create a new product
+    // Create a new product
     @PostMapping
-    public ResponseEntity<Product> createProduct(@Valid @RequestBody Product product) {
+    public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody ProductRequest request) {
+        logger.info("Received request to create product: {}", request.getName());
         try {
+            // Convert request to entity, which will handle the price conversion
+            Product product = convertToEntity(request);
             Product createdProduct = productService.createProduct(product);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdProduct);
+            ProductResponse response = convertToResponse(createdProduct);
+            logger.info("Successfully created product with ID: {}", createdProduct.getId());
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().build();
-        } catch (Exception e) {
-            logger.error("Error creating product", e);
-            return ResponseEntity.internalServerError().build();
+            logger.error("Validation error in createProduct: {}", e.getMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
         }
     }
 
-    // ✅ Get all products with pagination + sorting + search
+    // Get all products with pagination + sorting + search
     @GetMapping
-    public ResponseEntity<Page<Product>> getAllProducts(
+    public ResponseEntity<Page<ProductResponse>> getAllProducts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") String sortBy,
@@ -63,74 +68,71 @@ public class ProductController {
                 productPage = productService.getAllProducts(pageable);
             }
 
-            return ResponseEntity.ok(productPage);
+            // Convert Page<Product> to Page<ProductResponse>
+            Page<ProductResponse> responsePage = productPage.map(this::convertToResponse);
+            return ResponseEntity.ok(responsePage);
         } catch (Exception e) {
             logger.error("Error retrieving products", e);
             return ResponseEntity.internalServerError().build();
         }
     }
 
-    // ✅ Get product by ID
+    // Get product by ID
     @GetMapping("/{id}")
-    public ResponseEntity<Product> getProductById(@PathVariable Long id) {
-        try {
-            Product product = productService.getProductById(id);
-            return ResponseEntity.ok(product);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            logger.error("Error retrieving product by ID: {}", id, e);
-            return ResponseEntity.internalServerError().build();
-        }
+    public ResponseEntity<ProductResponse> getProductById(@PathVariable Long id) {
+        Product product = productService.getProductById(id);
+        ProductResponse response = convertToResponse(product);
+        return ResponseEntity.ok(response);
     }
 
-    // ✅ Update product
+    // Update product
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateProduct(@PathVariable Long id,
-                                           @Valid @RequestBody Product product) {
-        try {
-            Product updatedProduct = productService.updateProduct(id, product);
-            return ResponseEntity.ok(updatedProduct);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            logger.error("Error updating product", e);
-            return ResponseEntity.internalServerError().build();
-        }
+    public ResponseEntity<ProductResponse> updateProduct(@PathVariable Long id, @Valid @RequestBody ProductRequest request) {
+        logger.info("Received request to update product with ID: {}", id);
+        Product product = convertToEntity(request);
+        product.setId(id);
+        Product updatedProduct = productService.updateProduct(id, product);
+        ProductResponse response = convertToResponse(updatedProduct);
+        logger.info("Successfully updated product with ID: {}", id);
+        return ResponseEntity.ok(response);
     }
 
-
-    // ✅ Delete product
+    // Delete product
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
-        try {
-            productService.deleteProduct(id);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            logger.error("Error deleting product", e);
-            return ResponseEntity.internalServerError().build();
-        }
+        productService.deleteProduct(id);
+        return ResponseEntity.noContent().build();
     }
 
-    // ✅ Search products by name with pagination
-    @GetMapping("/search")
-    public ResponseEntity<Page<Product>> searchProductsByName(
-            @RequestParam String name,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id") String sortBy,
-            @RequestParam(defaultValue = "asc") String sortDir) {
 
-        try {
-            Page<Product> productPage = productService.searchProductsByName(name, page, size, sortBy, sortDir);
-            return ResponseEntity.ok(productPage);
-        } catch (Exception e) {
-            logger.error("Error searching products by name", e);
-            return ResponseEntity.internalServerError().build();
-        }
+    // Check stock availability
+    @GetMapping("/{id}/stock")
+    public ResponseEntity<Boolean> checkStockAvailability(
+            @PathVariable Long id,
+            @RequestParam Integer quantity) {
+        boolean available = productService.checkStockAvailability(id, quantity);
+        return ResponseEntity.ok(available);
+    }
+
+    // Helper methods for DTO conversion
+    private Product convertToEntity(ProductRequest request) {
+        return Product.builder()
+                .name(request.getName())
+                .description(request.getDescription())
+                .price(request.getPriceAsBigDecimal())
+                .quantity(request.getQuantity())
+                .build();
+    }
+
+    private ProductResponse convertToResponse(Product product) {
+        return ProductResponse.builder()
+                .id(product.getId())
+                .name(product.getName())
+                .description(product.getDescription())
+                .price(product.getPrice())
+                .quantity(product.getQuantity())
+                .createdAt(product.getCreatedAt())
+                .updatedAt(product.getUpdatedAt())
+                .build();
     }
 }

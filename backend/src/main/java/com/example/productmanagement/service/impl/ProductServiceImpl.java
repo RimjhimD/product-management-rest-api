@@ -1,22 +1,25 @@
 package com.example.productmanagement.service.impl;
 
 import com.example.productmanagement.entity.Product;
+import com.example.productmanagement.exception.DuplicateProductException;
 import com.example.productmanagement.repository.ProductRepository;
 import com.example.productmanagement.service.ProductService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.*;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
 
+@Slf4j
 @Service
 @Transactional
 public class ProductServiceImpl implements ProductService {
-
-    private static final Logger logger = LoggerFactory.getLogger(ProductServiceImpl.class);
 
     private final ProductRepository productRepository;
 
@@ -26,156 +29,180 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Product createProduct(Product product) {
-        logger.info("Creating new product: {}", product.getName());
-
-        if (productRepository.existsByNameIgnoreCase(product.getName())) {
-            throw new IllegalArgumentException("Product with name '" + product.getName() + "' already exists");
+        // Trim the product name and update the product object
+        String productName = product.getName() != null ? product.getName().trim() : "";
+        if (productName.isEmpty()) {
+            throw new IllegalArgumentException("Product name cannot be empty");
+        }
+        product.setName(productName);
+        
+        log.info("Creating new product: '{}' (length: {})", productName, productName.length());
+        
+        // Check if product with same name exists (case-insensitive)
+        if (productRepository.existsByNameIgnoreCase(productName)) {
+            log.warn("Product with name '{}' already exists", productName);
+            throw new DuplicateProductException(
+                "A product with the name '" + productName + "' already exists. Please use a different name.");
         }
 
-        Product savedProduct = productRepository.save(product);
-        logger.info("Product created successfully with ID: {}", savedProduct.getId());
-        return savedProduct;
+        try {
+            Product savedProduct = productRepository.save(product);
+            log.info("Product created successfully - ID: {}, Name: '{}' (length: {})", 
+                savedProduct.getId(), savedProduct.getName(), savedProduct.getName().length());
+            return savedProduct;
+        } catch (Exception e) {
+            log.error("Error creating product: {}", e.getMessage(), e);
+            throw new IllegalArgumentException("Failed to create product: " + e.getMessage());
+        }
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Product> getAllProducts() {
-        logger.info("Retrieving all products");
+        log.info("Retrieving all products");
         return productRepository.findAll();
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<Product> getAllProducts(Pageable pageable) {
-        logger.info("Retrieving all products with pagination: page={}, size={}", pageable.getPageNumber(), pageable.getPageSize());
+        log.info("Retrieving all products with pagination: page={}, size={}", pageable.getPageNumber(), pageable.getPageSize());
         return productRepository.findAll(pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Product getProductById(Long id) {
-        logger.info("Retrieving product with ID: {}", id);
+        log.info("Retrieving product with ID: {}", id);
         return productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found with ID: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Product not found with ID: " + id));
     }
 
     @Override
+    @Transactional
     public Product updateProduct(Long id, Product product) {
-        logger.info("Updating product with ID: {}", id);
-
-        Product existingProduct = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Product not found with ID: " + id));
-
-        if (!existingProduct.getName().equalsIgnoreCase(product.getName()) &&
-                productRepository.existsByNameIgnoreCase(product.getName())) {
-            throw new IllegalArgumentException("Product with name '" + product.getName() + "' already exists");
+        log.info("Updating product with ID: {}", id);
+        
+        // Find existing product
+        Product existingProduct = getProductById(id);
+        
+        // Check for duplicate name if name is being changed
+        if (!existingProduct.getName().equalsIgnoreCase(product.getName()) && 
+            productRepository.existsByNameIgnoreCase(product.getName())) {
+            String errorMessage = String.format("Product with name '%s' already exists", product.getName());
+            log.warn("Duplicate product name during update: {}", errorMessage);
+            throw new DuplicateProductException(errorMessage);
         }
-
+        
+        // Validate quantity
         if (product.getQuantity() < 0) {
-            throw new IllegalArgumentException("Quantity cannot be negative");
+            throw new IllegalArgumentException("Product quantity cannot be negative");
         }
-
-        // Commented out minimum quantity restriction of 5
-        // if (product.getQuantity() < 5) {
-        //     throw new IllegalArgumentException("Stock too low. Minimum allowed quantity is 5");
-        // }
-
+        
+        // Update product fields
         existingProduct.setName(product.getName());
         existingProduct.setDescription(product.getDescription());
         existingProduct.setPrice(product.getPrice());
         existingProduct.setQuantity(product.getQuantity());
-
-        Product updatedProduct = productRepository.save(existingProduct);
-        logger.info("Product updated successfully with ID: {}", updatedProduct.getId());
-        return updatedProduct;
+        
+        log.info("Updated product with ID: {}", id);
+        return productRepository.save(existingProduct);
     }
 
     @Override
+    @Transactional
     public void deleteProduct(Long id) {
-        logger.info("Deleting product with ID: {}", id);
-
         if (!productRepository.existsById(id)) {
-            throw new RuntimeException("Product not found with ID: " + id);
+            throw new EntityNotFoundException("Product not found with id: " + id);
         }
-
         productRepository.deleteById(id);
-        logger.info("Product deleted successfully with ID: {}", id);
+        log.info("Product deleted successfully with ID: {}", id);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<Product> searchProductsByName(String name) {
+    public List<Product> searchByNameIgnoreCase(String name) {
         return productRepository.searchByNameIgnoreCase(name);
     }
-
-
+    
     @Override
-    @Transactional(readOnly = true)
     public Page<Product> searchProductsByName(String name, int page, int size, String sortBy, String sortDir) {
-        logger.info("Searching products by name: {} with pagination, page={}, size={}", name, page, size);
-
+        log.info("Searching products by name: {}, page: {}, size: {}, sortBy: {}, sortDir: {}", 
+            name, page, size, sortBy, sortDir);
+            
         Sort sort = sortDir.equalsIgnoreCase("desc")
                 ? Sort.by(sortBy).descending()
                 : Sort.by(sortBy).ascending();
 
         Pageable pageable = PageRequest.of(page, size, sort);
-
-        return productRepository.searchByNameIgnoreCase(name, pageable);
+        
+        if (name == null || name.trim().isEmpty()) {
+            return productRepository.findAll(pageable);
+        }
+        return productRepository.searchProductsPageable(name.toLowerCase(), pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Product> getProductsByQuantityGreaterThan(Integer quantity) {
-        logger.info("Retrieving products with quantity greater than: {}", quantity);
+        log.info("Retrieving products with quantity greater than: {}", quantity);
         return productRepository.findByQuantityGreaterThan(quantity);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Product> getProductsByPriceRange(BigDecimal minPrice, BigDecimal maxPrice) {
-        logger.info("Retrieving products with price between {} and {}", minPrice, maxPrice);
+        log.info("Retrieving products with price between {} and {}", minPrice, maxPrice);
         return productRepository.findByPriceBetween(minPrice, maxPrice);
     }
 
     @Override
     @Transactional(readOnly = true)
     public boolean existsByName(String name) {
-        logger.info("Checking if product exists by name: {}", name);
+        log.info("Checking if product exists by name: {}", name);
         return productRepository.existsByNameIgnoreCase(name);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Product> getAllProductsOrderedByName() {
-        logger.info("Retrieving all products ordered by name");
+        log.info("Retrieving all products ordered by name");
         return productRepository.findAllByOrderByNameAsc();
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Product> getAllProductsOrderedByPriceAsc() {
-        logger.info("Retrieving all products ordered by price ascending");
+        log.info("Retrieving all products ordered by price ascending");
         return productRepository.findAllByOrderByPriceAsc();
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Product> getAllProductsOrderedByPriceDesc() {
-        logger.info("Retrieving all products ordered by price descending");
+        log.info("Retrieving all products ordered by price descending");
         return productRepository.findAllByOrderByPriceDesc();
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Product> getAllProductsOrderedByCreatedDateDesc() {
-        logger.info("Retrieving all products ordered by created date descending");
+        log.info("Retrieving all products ordered by created date descending");
         return productRepository.findAllByOrderByCreatedAtDesc();
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<Product> searchProducts(String searchTerm, Pageable pageable) {
-        logger.info("Searching products with term: {} with pagination", searchTerm);
-        return productRepository.findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(searchTerm, pageable);
+        log.info("Searching products with term: {} with pagination", searchTerm);
+        return productRepository.searchProductsPageable(searchTerm, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean checkStockAvailability(Long productId, Integer quantity) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new EntityNotFoundException("Product not found with id: " + productId));
+        return product.getQuantity() >= quantity;
     }
 }

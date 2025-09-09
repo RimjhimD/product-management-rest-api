@@ -13,34 +13,38 @@ import java.util.List;
 
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
+    
+    // Check if product exists by name (case-insensitive)
+    @Query("SELECT COUNT(p) > 0 FROM Product p WHERE LOWER(p.name) = LOWER(:name)")
+    boolean existsByNameIgnoreCase(@Param("name") String name);
 
-    // For non-paginated search
+    // For non-paginated search by name
     @Query("SELECT p FROM Product p WHERE LOWER(p.name) LIKE LOWER(CONCAT('%', :name, '%'))")
     List<Product> searchByNameIgnoreCase(@Param("name") String name);
-
-    // For paginated search
-    @Query("SELECT p FROM Product p WHERE LOWER(p.name) LIKE LOWER(CONCAT('%', :name, '%'))")
-    Page<Product> searchByNameIgnoreCase(@Param("name") String name, Pageable pageable);
+    
+    // Find by quantity greater than
+    List<Product> findByQuantityGreaterThan(Integer quantity);
 
     // Enhanced search across name and description
     @Query("SELECT p FROM Product p WHERE " +
            "LOWER(p.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
            "LOWER(p.description) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
-    Page<Product> findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(
-        @Param("searchTerm") String searchTerm, Pageable pageable);
-
+    List<Product> searchProducts(@Param("searchTerm") String searchTerm);
     
-    List<Product> findByQuantityGreaterThan(Integer quantity);
+    // For paginated enhanced search
+    @Query("SELECT p FROM Product p WHERE " +
+           "LOWER(p.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+           "LOWER(p.description) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
+    Page<Product> searchProductsPageable(@Param("searchTerm") String searchTerm, Pageable pageable);
+    
+    // Find products by price range
+    @Query("SELECT p FROM Product p WHERE p.price BETWEEN :minPrice AND :maxPrice")
+    List<Product> findByPriceBetween(@Param("minPrice") BigDecimal minPrice, 
+                                    @Param("maxPrice") BigDecimal maxPrice);
 
-    List<Product> findByPriceBetween(BigDecimal minPrice, BigDecimal maxPrice);
-
-    boolean existsByNameIgnoreCase(String name);
-
+    // Simplified ordering methods using Spring Data JPA naming conventions
     List<Product> findAllByOrderByNameAsc();
-
     List<Product> findAllByOrderByPriceAsc();
-
     List<Product> findAllByOrderByPriceDesc();
-
     List<Product> findAllByOrderByCreatedAtDesc();
 }

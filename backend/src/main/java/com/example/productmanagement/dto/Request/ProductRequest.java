@@ -1,8 +1,17 @@
 package com.example.productmanagement.dto.Request;
 
 import jakarta.validation.constraints.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.math.BigDecimal;
 
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class ProductRequest {
 
     @NotBlank(message = "Product name is required")
@@ -10,69 +19,23 @@ public class ProductRequest {
     private String name;
 
     @NotBlank(message = "Product description is required")
-    @Size(min = 10, max = 500, message = "Product description must be between 10 and 500 characters")
+    @Size(min = 2, max = 500, message = "Product description must be between 2 and 500 characters")
     private String description;
 
-    @NotNull(message = "Product price is required")
-    @DecimalMin(value = "0.01", message = "Price must be greater than 0")
-    @Digits(integer = 10, fraction = 2, message = "Price must have at most 10 integer digits and 2 decimal places")
-    private BigDecimal price;
-
+    @NotBlank(message = "Product price is required")
+    @Pattern(regexp = "^\\d+\\.?\\d{0,2}$", message = "Invalid price format. Use up to 2 decimal places")
+    private String price;
+    
     @NotNull(message = "Product quantity is required")
     @Min(value = 0, message = "Quantity cannot be negative")
     private Integer quantity;
 
-    // Default constructor
-    public ProductRequest() {}
-
-    // Constructor with parameters
-    public ProductRequest(String name, String description, BigDecimal price, Integer quantity) {
-        this.name = name;
-        this.description = description;
-        this.price = price;
-        this.quantity = quantity;
-    }
-
-    // Getters and Setters
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public BigDecimal getPrice() {
-        return price;
-    }
-
-    public void setPrice(BigDecimal price) {
-        this.price = price;
-    }
-
-    public Integer getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(Integer quantity) {
-        this.quantity = quantity;
-    }
-
-    @Override
-    public String toString() {
-        return "ProductRequest{" +
-                "name='" + name + '\'' +
-                ", description='" + description + '\'' +
-                ", price=" + price +
-                ", quantity=" + quantity +
-                '}';
+    // Get price as BigDecimal for internal use
+    public BigDecimal getPriceAsBigDecimal() {
+        try {
+            return new BigDecimal(price);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid price format: " + price);
+        }
     }
 }

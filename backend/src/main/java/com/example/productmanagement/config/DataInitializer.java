@@ -31,26 +31,126 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         List<Product> products = List.of(
-                new Product("Laptop", "High-performance laptop with 16GB RAM and 512GB SSD", new BigDecimal("1299.99"), 50),
-                new Product("Smartphone", "Latest smartphone with advanced camera and 5G connectivity", new BigDecimal("799.99"), 100),
-                new Product("Wireless Headphones", "Premium wireless headphones with noise cancellation", new BigDecimal("299.99"), 75),
-                new Product("Gaming Mouse", "High-precision gaming mouse with RGB lighting", new BigDecimal("89.99"), 200),
-                new Product("Mechanical Keyboard", "Mechanical keyboard with Cherry MX switches", new BigDecimal("149.99"), 120),
-                new Product("Monitor", "27-inch 4K UHD monitor", new BigDecimal("399.99"), 60),
-                new Product("External SSD", "1TB portable SSD", new BigDecimal("179.99"), 80),
-                new Product("Webcam", "1080p HD webcam for video conferencing", new BigDecimal("69.99"), 150),
-                new Product("Bluetooth Speaker", "Portable Bluetooth speaker with deep bass", new BigDecimal("49.99"), 90),
-                new Product("Smartwatch", "Fitness smartwatch with heart rate monitor", new BigDecimal("199.99"), 110),
-                new Product("Tablet", "10-inch tablet with stylus support", new BigDecimal("329.99"), 70),
-                new Product("Router", "Wi-Fi 6 router with high-speed connectivity", new BigDecimal("129.99"), 85),
-                new Product("Printer", "Wireless color printer", new BigDecimal("149.99"), 40),
-                new Product("Desk Lamp", "LED desk lamp with adjustable brightness", new BigDecimal("39.99"), 130),
-                new Product("External HDD", "2TB external hard drive", new BigDecimal("89.99"), 75),
-                new Product("Microphone", "USB condenser microphone for streaming", new BigDecimal("99.99"), 65),
-                new Product("Graphics Tablet", "Drawing tablet with pressure-sensitive pen", new BigDecimal("249.99"), 55),
-                new Product("Smart Home Hub", "Voice-controlled smart home hub", new BigDecimal("129.99"), 40),
-                new Product("VR Headset", "Virtual reality headset for immersive gaming", new BigDecimal("399.99"), 30),
-                new Product("Fitness Tracker", "Waterproof fitness tracker with sleep monitoring", new BigDecimal("79.99"), 100)
+                Product.builder()
+                        .name("Laptop")
+                        .description("High-performance laptop with 16GB RAM and 512GB SSD")
+                        .price(new BigDecimal("1299.99"))
+                        .quantity(50)
+                        .build(),
+                Product.builder()
+                        .name("Smartphone")
+                        .description("Latest smartphone with advanced camera and 5G connectivity")
+                        .price(new BigDecimal("799.99"))
+                        .quantity(100)
+                        .build(),
+                Product.builder()
+                        .name("Wireless Headphones")
+                        .description("Premium wireless headphones with noise cancellation")
+                        .price(new BigDecimal("299.99"))
+                        .quantity(75)
+                        .build(),
+                Product.builder()
+                        .name("Gaming Mouse")
+                        .description("High-precision gaming mouse with RGB lighting")
+                        .price(new BigDecimal("89.99"))
+                        .quantity(200)
+                        .build(),
+                Product.builder()
+                        .name("Mechanical Keyboard")
+                        .description("Mechanical keyboard with Cherry MX switches")
+                        .price(new BigDecimal("149.99"))
+                        .quantity(120)
+                        .build(),
+                Product.builder()
+                        .name("Monitor")
+                        .description("27-inch 4K UHD monitor")
+                        .price(new BigDecimal("399.99"))
+                        .quantity(60)
+                        .build(),
+                Product.builder()
+                        .name("External SSD")
+                        .description("1TB portable SSD")
+                        .price(new BigDecimal("179.99"))
+                        .quantity(80)
+                        .build(),
+                Product.builder()
+                        .name("Webcam")
+                        .description("1080p HD webcam for video conferencing")
+                        .price(new BigDecimal("69.99"))
+                        .quantity(150)
+                        .build(),
+                Product.builder()
+                        .name("Bluetooth Speaker")
+                        .description("Portable Bluetooth speaker with deep bass")
+                        .price(new BigDecimal("49.99"))
+                        .quantity(90)
+                        .build(),
+                Product.builder()
+                        .name("Smartwatch")
+                        .description("Fitness smartwatch with heart rate monitor")
+                        .price(new BigDecimal("199.99"))
+                        .quantity(110)
+                        .build(),
+                Product.builder()
+                        .name("Tablet")
+                        .description("10-inch tablet with stylus support")
+                        .price(new BigDecimal("329.99"))
+                        .quantity(70)
+                        .build(),
+                Product.builder()
+                        .name("Router")
+                        .description("Wi-Fi 6 router with high-speed connectivity")
+                        .price(new BigDecimal("129.99"))
+                        .quantity(85)
+                        .build(),
+                Product.builder()
+                        .name("Printer")
+                        .description("Wireless color printer")
+                        .price(new BigDecimal("149.99"))
+                        .quantity(40)
+                        .build(),
+                Product.builder()
+                        .name("Desk Lamp")
+                        .description("LED desk lamp with adjustable brightness")
+                        .price(new BigDecimal("39.99"))
+                        .quantity(130)
+                        .build(),
+                Product.builder()
+                        .name("External HDD")
+                        .description("2TB external hard drive")
+                        .price(new BigDecimal("89.99"))
+                        .quantity(75)
+                        .build(),
+                Product.builder()
+                        .name("Microphone")
+                        .description("USB condenser microphone for streaming")
+                        .price(new BigDecimal("99.99"))
+                        .quantity(65)
+                        .build(),
+                Product.builder()
+                        .name("Graphics Tablet")
+                        .description("Drawing tablet with pressure-sensitive pen")
+                        .price(new BigDecimal("249.99"))
+                        .quantity(55)
+                        .build(),
+                Product.builder()
+                        .name("Smart Home Hub")
+                        .description("Voice-controlled smart home hub")
+                        .price(new BigDecimal("129.99"))
+                        .quantity(40)
+                        .build(),
+                Product.builder()
+                        .name("VR Headset")
+                        .description("Virtual reality headset for immersive gaming")
+                        .price(new BigDecimal("399.99"))
+                        .quantity(30)
+                        .build(),
+                Product.builder()
+                        .name("Fitness Tracker")
+                        .description("Waterproof fitness tracker with sleep monitoring")
+                        .price(new BigDecimal("79.99"))
+                        .quantity(100)
+                        .build()
         );
 
         productRepository.saveAll(products);

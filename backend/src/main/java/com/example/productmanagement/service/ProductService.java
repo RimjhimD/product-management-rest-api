@@ -26,7 +26,7 @@ public interface ProductService {
     void deleteProduct(Long id);
 
 
-    List<Product> searchProductsByName(String name);
+    List<Product> searchByNameIgnoreCase(String name);
 
 
     Page<Product> searchProductsByName(String name, int page, int size, String sortBy, String sortDir);
@@ -55,4 +55,7 @@ public interface ProductService {
 
 
     List<Product> getAllProductsOrderedByCreatedDateDesc();
+
+    // Stock availability check
+    boolean checkStockAvailability(Long productId, Integer requestedQuantity);
 }
