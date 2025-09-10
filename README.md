@@ -1,7 +1,8 @@
 
 # 🚀 Product Management System
 
-A full-stack Product Management System with **Spring Boot REST API** and **React frontend**. Simple authentication flow with complete product CRUD operations, search, sorting, and pagination.
+This is a partially developed full-stack Product Management System built with Spring Boot REST API and a React frontend.
+The implementation covers the basic objectives of the task, including authentication flow (mocked), product CRUD operations, and partial enhancements such as search, sorting, and pagination.
 
 ![Java](https://img.shields.io/badge/Java-23-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.5-green)
