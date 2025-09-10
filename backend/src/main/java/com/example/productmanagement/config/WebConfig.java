@@ -14,7 +14,6 @@ public class WebConfig implements WebMvcConfigurer {
             "http://localhost:5173", 
             "http://localhost:5174", 
             "http://localhost:3000",
-            "https://your-production-domain.com" // Add your production domain here
         };
         
         // Support environment variable for additional origins
