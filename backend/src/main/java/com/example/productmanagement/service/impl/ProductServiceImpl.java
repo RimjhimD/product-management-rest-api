@@ -29,7 +29,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Product createProduct(Product product) {
-        // Trim the product name and update the product object
+        
         String productName = product.getName() != null ? product.getName().trim() : "";
         if (productName.isEmpty()) {
             throw new IllegalArgumentException("Product name cannot be empty");
