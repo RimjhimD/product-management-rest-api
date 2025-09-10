@@ -30,7 +30,7 @@ public class ProductRequest {
     @Min(value = 0, message = "Quantity cannot be negative")
     private Integer quantity;
 
-    // Get price as BigDecimal for internal use
+    
     public BigDecimal getPriceAsBigDecimal() {
         try {
             return new BigDecimal(price);
