@@ -42,7 +42,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findByPriceBetween(@Param("minPrice") BigDecimal minPrice, 
                                     @Param("maxPrice") BigDecimal maxPrice);
 
-    // Simplified ordering methods using Spring Data JPA naming conventions
+    
     List<Product> findAllByOrderByNameAsc();
     List<Product> findAllByOrderByPriceAsc();
     List<Product> findAllByOrderByPriceDesc();
