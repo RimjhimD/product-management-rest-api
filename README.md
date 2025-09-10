@@ -124,7 +124,8 @@ Frontend runs on: `http://localhost:5173`
 
 ## 📄 License
 
-This project is licensed under the [GNU GPL v3](LICENSE).
+This project is licensed under the terms described in the [LICENSE](LICENSE) file.
+
 
 
 ---
