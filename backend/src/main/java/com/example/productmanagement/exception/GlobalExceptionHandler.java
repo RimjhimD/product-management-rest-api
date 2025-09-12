@@ -48,7 +48,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex) {
         String paramName = ex.getName() != null ? ex.getName() : "unknown";
-        String paramValue = ex.getValue() != null ? ex.getValue().toString() : "null";
+        Object value = ex.getValue();
+        String paramValue = value != null ? value.toString() : "null";
         String message = String.format("Parameter '%s' has invalid value: '%s'", paramName, paramValue);
 
         return buildErrorResponse(HttpStatus.BAD_REQUEST, "Invalid Parameter", message, null);
